@@ -63,7 +63,7 @@ struct RouteHandlerMapping {
     let handler: HandlerClosure
 }
 
-struct MockNIOHTTPRouter: MockHttpRouter {
+class MockNIOHTTPRouter: MockHttpRouter {
     private var routes = [MockHTTPMethod: [RouteHandlerMapping]]()
     
     var requiresRouteMiddleware: Bool {
@@ -79,7 +79,7 @@ struct MockNIOHTTPRouter: MockHttpRouter {
         return nil
     }
     
-    mutating func register(route: MockHTTPRoute, handler: HandlerClosure?) {
+    func register(route: MockHTTPRoute, handler: HandlerClosure?) {
         guard let method = route.method else { return }
         var methodRoutes = routes[method] ?? [RouteHandlerMapping]()
         if methodRoutes.contains(where: { $0.route == route }) {

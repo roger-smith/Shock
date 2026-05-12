@@ -7,6 +7,7 @@ typealias Template = GRMustacheTemplate
 #elseif canImport(Mustache)
 import Mustache
 #endif
+import os
 
 class MockHTTPResponseFactory {
     
@@ -61,10 +62,19 @@ class MockHTTPResponseFactory {
         default:
             var components = components
             let ext = components.removeLast()
-            _url = bundle.url(forResource: components.joined(separator: "."), withExtension: ext)!
+            _url = bundle.url(forResource: components.joined(separator: "."), withExtension: ext)
         }
 
-        guard let url = _url else { return nil }
-        return try? Data(contentsOf: url)
+        guard let url = _url else {
+            Logger().error("Could not find file: \(name)")
+            return nil
+        }
+
+        do {
+            return try Data(contentsOf: url)
+        } catch {
+            Logger().error("No data for file: \(url)")
+            return nil
+        }
     }
 }

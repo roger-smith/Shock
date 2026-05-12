@@ -66,14 +66,14 @@ class MockHTTPResponseFactory {
         }
 
         guard let url = _url else {
-            Logger().error("Could not find file: \(name)")
+            Logger().critical("SHOCK: Could not find file: \(name)")
             return nil
         }
 
         do {
             return try Data(contentsOf: url)
         } catch {
-            Logger().error("No data for file: \(url)")
+            Logger().critical("SHOCK: No data for file: \(url)")
             return nil
         }
     }

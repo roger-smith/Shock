@@ -80,14 +80,19 @@ class MockNIOHTTPRouter: MockHttpRouter {
     }
     
     func register(route: MockHTTPRoute, handler: HandlerClosure?) {
-        guard let method = route.method else { return }
-        var methodRoutes = routes[method] ?? [RouteHandlerMapping]()
-        if methodRoutes.contains(where: { $0.route == route }) {
-            methodRoutes = methodRoutes.filter({ $0.route != route })
-        }
-        if let handler = handler {
-            methodRoutes.append(RouteHandlerMapping(route: route, handler: handler))
-        }
-        routes[method] = methodRoutes
-    }
+          guard let method = route.method, let urlPath = route.urlPath else { return }
+          var methodRoutes = routes[method] ?? [RouteHandlerMapping]()
+          methodRoutes = methodRoutes.filter { existing in
+              !existing.route.matches(
+                  method: method,
+                  path: urlPath,
+                  params: route.query ?? [:],
+                  headers: route.requestHeaders ?? [:]
+              )
+          }
+          if let handler = handler {
+              methodRoutes.append(RouteHandlerMapping(route: route, handler: handler))
+          }
+          routes[method] = methodRoutes
+      }
 }

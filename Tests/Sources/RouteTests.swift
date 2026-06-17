@@ -1,119 +1,118 @@
 //  RouteTests.swift
 
-import XCTest
 import Shock
+import XCTest
 
 class RouteTests: ShockTestCase {
-    
     func testSimpleRoute() {
         let route: MockHTTPRoute = .simple(method: .get, urlPath: "/simple", code: 200, filename: "testSimpleRoute.txt")
         server.setup(route: route)
-        
-        let expectation = self.expectation(description: "Expect 200 response with response body")
-         
+
+        let expectation = expectation(description: "Expect 200 response with response body")
+
         HTTPClient.get(url: "\(server.hostURL)/simple") { code, body, _, _ in
             XCTAssertEqual(code, 200)
             XCTAssertEqual(body, "testSimpleRoute test fixture\n")
             expectation.fulfill()
         }
-        self.waitForExpectations(timeout: 2.0, handler: nil)
+        waitForExpectations(timeout: 2.0, handler: nil)
     }
-    
+
     func testSimpleRouteWithVariables() {
         let route: MockHTTPRoute = .simple(method: .get, urlPath: "/simple/:foo", code: 200, filename: "testSimpleRouteWithVariables.txt")
         server.setup(route: route)
-        
-        let expectation = self.expectation(description: "Expect 200 response with response body")
-        
+
+        let expectation = expectation(description: "Expect 200 response with response body")
+
         HTTPClient.get(url: "\(server.hostURL)/simple/1") { code, body, _, _ in
             XCTAssertEqual(code, 200)
             XCTAssertEqual(body, "testSimpleRoute (with variables) test fixture\n")
             expectation.fulfill()
         }
-        self.waitForExpectations(timeout: 2.0, handler: nil)
+        waitForExpectations(timeout: 2.0, handler: nil)
     }
-    
+
     func testSimpleRouteWithAndWithoutVariables() {
         let withoutRoute: MockHTTPRoute = .simple(method: .get, urlPath: "/simple/withoutvariables", code: 200, filename: "testSimpleRoute.txt")
         let withRoute: MockHTTPRoute = .simple(method: .get, urlPath: "/simple/withvariables/:foo", code: 200, filename: "testSimpleRouteWithVariables.txt")
         server.setup(route: .collection(routes: [withRoute, withoutRoute]))
-        
-        let expectation = self.expectation(description: "Expect 200 response with response body")
-        
+
+        let expectation = expectation(description: "Expect 200 response with response body")
+
         HTTPClient.get(url: "\(server.hostURL)/simple/withvariables/1") { code, body, _, _ in
             XCTAssertEqual(code, 200)
             XCTAssertEqual(body, "testSimpleRoute (with variables) test fixture\n")
             expectation.fulfill()
         }
-        self.waitForExpectations(timeout: 2.0, handler: nil)
+        waitForExpectations(timeout: 2.0, handler: nil)
     }
-    
+
     func testSimpleRouteWithEmptyURLPath() {
         let withoutRoute: MockHTTPRoute = .simple(method: .get, urlPath: "", code: 200, filename: "testSimpleRoute.txt")
         let withRoute: MockHTTPRoute = .simple(method: .get, urlPath: "/simple/withvariables/:foo", code: 200, filename: "testSimpleRouteWithVariables.txt")
         server.setup(route: .collection(routes: [withRoute, withoutRoute]))
-        
-        let expectation = self.expectation(description: "Expect 200 response with response body")
-        
+
+        let expectation = expectation(description: "Expect 200 response with response body")
+
         HTTPClient.get(url: "\(server.hostURL)/simple/withvariables/1") { code, body, _, _ in
             XCTAssertEqual(code, 200)
             XCTAssertEqual(body, "testSimpleRoute (with variables) test fixture\n")
             expectation.fulfill()
         }
-        self.waitForExpectations(timeout: 2.0, handler: nil)
+        waitForExpectations(timeout: 2.0, handler: nil)
     }
-    
+
     func testSimpleRouteWithEmptyURLPathAlternate() {
         let withoutRoute: MockHTTPRoute = .simple(method: .get, urlPath: "/simple/withoutvariables", code: 200, filename: "testSimpleRoute.txt")
         let withRoute: MockHTTPRoute = .simple(method: .get, urlPath: "", code: 200, filename: "testSimpleRouteWithVariables.txt")
         server.setup(route: .collection(routes: [withRoute, withoutRoute]))
-        
-        let expectation = self.expectation(description: "Expect 200 response with response body")
-        
+
+        let expectation = expectation(description: "Expect 200 response with response body")
+
         HTTPClient.get(url: "\(server.hostURL)/simple/withoutvariables") { code, body, _, _ in
             XCTAssertEqual(code, 200)
             XCTAssertEqual(body, "testSimpleRoute test fixture\n")
             expectation.fulfill()
         }
-        self.waitForExpectations(timeout: 2.0, handler: nil)
+        waitForExpectations(timeout: 2.0, handler: nil)
     }
-    
+
     func testRedirectRoute() {
         let route: MockHTTPRoute = .collection(routes: [
             .redirect(urlPath: "/redirect", destination: "/destination"),
-            .simple(method: .get, urlPath: "/destination", code: 200, filename: "testRedirectRoute.txt")
-            ])
+            .simple(method: .get, urlPath: "/destination", code: 200, filename: "testRedirectRoute.txt"),
+        ])
         server.setup(route: route)
-        
-        let expectation = self.expectation(description: "Expect 200 response with response body after redirect")
-        
+
+        let expectation = expectation(description: "Expect 200 response with response body after redirect")
+
         HTTPClient.get(url: "\(server.hostURL)/redirect") { code, body, _, _ in
             XCTAssertEqual(code, 200)
             XCTAssertEqual(body, "testRedirectRoute test fixture\n")
             expectation.fulfill()
         }
-        self.waitForExpectations(timeout: 2.0, handler: nil)
+        waitForExpectations(timeout: 2.0, handler: nil)
     }
-    
+
     func testRouteProperties() {
         let emptyRoute: MockHTTPRoute = .collection(routes: [])
         XCTAssertNil(emptyRoute.urlPath)
         XCTAssertNil(emptyRoute.method)
     }
-    
+
     func testTimeoutRoute() {
         let route: MockHTTPRoute = .timeout(method: .get, urlPath: "/timeouttest", timeoutInSeconds: 2)
         server.setup(route: route)
-        
-        let expectation = self.expectation(description: "This expectation should NOT be fulfilled")
-        
+
+        let expectation = expectation(description: "This expectation should NOT be fulfilled")
+
         HTTPClient.get(url: "\(server.hostURL)/timeouttest", timeout: 2) { _, _, _, error in
             XCTAssertNotNil(error, "Request should have errored")
             expectation.fulfill()
         }
-        self.waitForExpectations(timeout: 2.5, handler: nil)
+        waitForExpectations(timeout: 2.5, handler: nil)
     }
-    
+
     func testSimpleRouteEquivalence() {
         var route1 = MockHTTPRoute.simple(method: .get, urlPath: "/restaurants/bypostcode/:postcode", code: 200, filename: nil)
         var route2 = MockHTTPRoute.simple(method: .get, urlPath: "/restaurants/bypostcode/:postcode", code: 200, filename: nil)
@@ -131,7 +130,7 @@ class RouteTests: ShockTestCase {
         route2 = MockHTTPRoute.simple(method: .get, urlPath: "restaurants/:id/reviews", code: 200, filename: nil)
         XCTAssertNotEqual(route1, route2, "Paths are different, should not be equal")
     }
-    
+
     func testSimpleRouteWithVariablesEquivalence() {
         var route1 = MockHTTPRoute.simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil)
         var route2 = MockHTTPRoute.simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil)
@@ -146,40 +145,124 @@ class RouteTests: ShockTestCase {
         route2 = MockHTTPRoute.simple(method: .post, urlPath: "foo/bar", code: 200, filename: nil)
         XCTAssertNotEqual(route1, route2, "Methods are different, should not be equal")
     }
-    
+
     func testCustomRouteEquivalence() {
-        var route1 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value"],
-                                          requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
-        var route2 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value"],
-                                          requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
+        var route1 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
+        var route2 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
         XCTAssertEqual(route1, route2, "Custom routes should be equal")
-        route1 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value"],
-                                      requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
-        route2 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value"],
-                                      requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 404, filename: nil)
+        route1 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
+        route2 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 404,
+            filename: nil,
+        )
         XCTAssertEqual(route1, route2, "Codes are different, should not affect equality")
-        route1 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value"],
-                                      requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
-        route2 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value2"],
-                                      requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
+        route1 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
+        route2 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value2"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
         XCTAssertNotEqual(route1, route2, "Queries are different, should not be equal")
-        route1 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value"],
-                                      requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
-        route2 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value"],
-                                      requestHeaders: ["HTTPHeader": "true"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
+        route1 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
+        route2 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "true"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
         XCTAssertNotEqual(route1, route2, "Request headers are different, should not be equal")
-        route1 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value"],
-                                      requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
-        route2 = MockHTTPRoute.custom(method: .get, urlPath: "bar/foo", query: ["query": "value"],
-                                      requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
+        route1 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
+        route2 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "bar/foo",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
         XCTAssertNotEqual(route1, route2, "Paths are different, should not be equal")
-        route1 = MockHTTPRoute.custom(method: .get, urlPath: "foo/bar", query: ["query": "value"],
-                                      requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
-        route2 = MockHTTPRoute.custom(method: .post, urlPath: "foo/bar", query: ["query": "value"],
-                                      requestHeaders: ["HTTPHeader": "false"], responseHeaders: ["HTTPHeader": "true"], code: 200, filename: nil)
+        route1 = MockHTTPRoute.custom(
+            method: .get,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
+        route2 = MockHTTPRoute.custom(
+            method: .post,
+            urlPath: "foo/bar",
+            query: ["query": "value"],
+            requestHeaders: ["HTTPHeader": "false"],
+            responseHeaders: ["HTTPHeader": "true"],
+            code: 200,
+            filename: nil,
+        )
         XCTAssertNotEqual(route1, route2, "Methods are different, should not be equal")
     }
-    
+
     func testTemplateRouteEquivalence() {
         var route1 = MockHTTPRoute.template(method: .get, urlPath: "foo/bar", code: 200, filename: nil, templateInfo: ["Value": 1])
         var route2 = MockHTTPRoute.template(method: .get, urlPath: "foo/bar", code: 200, filename: nil, templateInfo: ["Value": 1])
@@ -197,7 +280,7 @@ class RouteTests: ShockTestCase {
         route2 = MockHTTPRoute.template(method: .post, urlPath: "foo/bar", code: 200, filename: nil, templateInfo: ["Value": 1])
         XCTAssertNotEqual(route1, route2, "Methods are different, should not be equal")
     }
-    
+
     func testRedirectRouteEquivalence() {
         var route1 = MockHTTPRoute.redirect(urlPath: "foo/bar", destination: "bar/foo")
         var route2 = MockHTTPRoute.redirect(urlPath: "foo/bar", destination: "bar/foo")
@@ -209,7 +292,7 @@ class RouteTests: ShockTestCase {
         route2 = MockHTTPRoute.redirect(urlPath: "foo/bar", destination: "foo/bar")
         XCTAssertEqual(route1, route2, "Destinations are different, should not affect equality")
     }
-    
+
     func testTimeoutRouteEquivalence() {
         var route1 = MockHTTPRoute.timeout(method: .get, urlPath: "foo/bar", timeoutInSeconds: 1)
         var route2 = MockHTTPRoute.timeout(method: .get, urlPath: "foo/bar", timeoutInSeconds: 1)
@@ -224,28 +307,44 @@ class RouteTests: ShockTestCase {
         route2 = MockHTTPRoute.timeout(method: .post, urlPath: "foo/bar", timeoutInSeconds: 1)
         XCTAssertNotEqual(route1, route2, "Methods are different, should not be equal")
     }
-    
+
     func testCollectionRouteEquivalence() {
         var route1 = MockHTTPRoute.collection(routes: [
-            .simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil)
+            .simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil),
         ])
         var route2 = MockHTTPRoute.collection(routes: [
-            .simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil)
+            .simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil),
         ])
         XCTAssertEqual(route1, route2, "Collection routes should be equal")
         route1 = MockHTTPRoute.collection(routes: [
-            .simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil)
+            .simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil),
         ])
         route2 = MockHTTPRoute.collection(routes: [
-            .simple(method: .get, urlPath: "foo/bar", code: 404, filename: nil)
+            .simple(method: .get, urlPath: "foo/bar", code: 404, filename: nil),
         ])
         XCTAssertEqual(route1, route2, "Codes are different, should not affect equality")
         route1 = MockHTTPRoute.collection(routes: [
-            .simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil)
+            .simple(method: .get, urlPath: "foo/bar", code: 200, filename: nil),
         ])
         route2 = MockHTTPRoute.collection(routes: [
-            .simple(method: .get, urlPath: "bar/foo", code: 200, filename: nil)
+            .simple(method: .get, urlPath: "bar/foo", code: 200, filename: nil),
         ])
         XCTAssertNotEqual(route1, route2, "Paths are different, should not be equal")
+    }
+
+    func testReRegisteringRouteWithDifferentCaseServesLatestRoute() {
+        let simple: MockHTTPRoute = .simple(method: .get, urlPath: "/reregister", code: 200, filename: "testSimpleRoute.txt")
+        let template: MockHTTPRoute = .template(method: .get, urlPath: "/reregister", code: 200, filename: "testReRegisteredRoute", templateInfo: ["value": "replaced"])
+        server.setup(route: simple)
+        server.setup(route: template)
+
+        let expectation = expectation(description: "Expect template response, not the original simple response")
+
+        HTTPClient.get(url: "\(server.hostURL)/reregister") { code, body, _, _ in
+            XCTAssertEqual(code, 200)
+            XCTAssertEqual(body, "{\"value\": \"replaced\"}")
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 2.0, handler: nil)
     }
 }

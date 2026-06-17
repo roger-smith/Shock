@@ -19,19 +19,19 @@ class MockHTTPResponseFactory {
             self.bundle = bundle
         }
         
-        func load(withFileName templateFilename: String) -> Template {
+        func load(withFileName templateFilename: String) -> Template? {
             #if canImport(GRMustache)
-            return try! Template(fromResource: templateFilename, bundle: bundle)
+            return try? Template(fromResource: templateFilename, bundle: bundle)
             #elseif canImport(Mustache)
-            return try! Template(named: templateFilename, bundle: bundle)
+            return try? Template(named: templateFilename, bundle: bundle)
             #endif
         }
 
-        func render(withTemplate template: Template, data: Any?) -> String {
+        func render(withTemplate template: Template, data: Any?) -> String? {
             #if canImport(GRMustache)
-             return try! template.renderObject(data)
+             return try? template.renderObject(data)
              #elseif canImport(Mustache)
-             return try! template.render(data)
+             return try? template.render(data)
              #endif
         }
     }
@@ -44,9 +44,16 @@ class MockHTTPResponseFactory {
     
     func response(withTemplateFileName templateFileName: String, data: Any) -> Data? {
         let templateHelper = TemplateHelper(bundle: bundle)
-        let template = templateHelper.load(withFileName: templateFileName)
-        let responseData: String = templateHelper.render(withTemplate: template, data: data)
-        return responseData.data(using: .utf8)
+        guard let template = templateHelper.load(withFileName: templateFileName) else {
+            Logger().critical("SHOCK: Could not find template: \(templateFileName)")
+            return nil
+        }
+        guard let responseData = templateHelper.render(withTemplate: template, data: data)?.data(using: .utf8) else {
+            Logger().critical("SHOCK: Could not render template: \(templateFileName)")
+            return nil
+
+        }
+        return responseData
     }
     
     func response(fromFileNamed name: String) -> Data? {

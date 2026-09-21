@@ -18,11 +18,11 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/groue/GRMustache.swift",
-            exact: "4.1.0",
+            exact: "7.0.0",
         ),
         .package(
             url: "https://github.com/apple/swift-nio",
-            exact: "2.51.0",
+            exact: "2.103.0",
         ),
     ],
     targets: [
